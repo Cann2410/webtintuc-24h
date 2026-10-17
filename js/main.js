@@ -79,7 +79,7 @@ function createGridHtml(postsList) {
         
         html += `
             <div class="card-clean" onclick="renderArticleDetail('${featuredLarge.id}')">
-                <img src="${featuredLarge.thumbnail || defaultImg}" class="card-img-large" alt="thumb">
+                <img src="${featuredLarge.thumbnail || featuredLarge.image || defaultImg}" class="card-img-large" alt="thumb">
                 <div class="card-category-green">${(featuredLarge.category || 'THỜI SỰ').toUpperCase()}</div>
                 <h3 class="card-title-large-green">${featuredLarge.title}</h3>
                 <p class="card-excerpt-clean">${excerptText}</p>
@@ -92,7 +92,7 @@ function createGridHtml(postsList) {
         const defaultImgSmall = "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=600&auto=format&fit=crop";
         html += `
             <div class="card-clean" onclick="renderArticleDetail('${post.id}')">
-                <img src="${post.thumbnail || defaultImgSmall}" class="card-img-small" alt="thumb">
+                <img src="${post.thumbnail || post.image || defaultImgSmall}" class="card-img-small" alt="thumb">
                 <h4 class="card-title-small-clean">${post.title}</h4>
                 <div class="card-time-clean">${post.publishedAt || ''}</div>
             </div>
@@ -103,7 +103,7 @@ function createGridHtml(postsList) {
     return html;
 }
 
-// === 4. TRANG CHỦ & BÀI VIẾT TEO CHUYÊN MỤC ===
+// === 4. TRANG CHỦ & BÀI VIẾT THEO CHUYÊN MỤC ===
 function renderCategory(catId = 'home') {
     const app = document.getElementById('appView');
     if (!app) return;
@@ -130,7 +130,7 @@ function renderCategory(catId = 'home') {
                 
                 html += `
                     <div class="list-item" onclick="renderArticleDetail('${post.id}')">
-                        <img src="${post.thumbnail || defaultImgList}" class="list-item-img" alt="thumb">
+                        <img src="${post.thumbnail || post.image || defaultImgList}" class="list-item-img" alt="thumb">
                         <div class="list-content">
                             <div class="card-category-green">${(post.category || '').toUpperCase()}</div>
                             <h4 class="list-item-title">${post.title}</h4>
@@ -181,7 +181,7 @@ function renderCategory(catId = 'home') {
 
             html += `
                 <div class="list-item" onclick="renderArticleDetail('${post.id}')">
-                    <img src="${post.thumbnail || defaultImgList}" class="list-item-img" alt="thumb">
+                    <img src="${post.thumbnail || post.image || defaultImgList}" class="list-item-img" alt="thumb">
                     <div class="list-content">
                         <div class="card-category-green">${(post.category || '').toUpperCase()}</div>
                         <h4 class="list-item-title">${post.title}</h4>
@@ -222,7 +222,7 @@ function renderArticleDetail(postId) {
                 <span style="color:#008837; font-weight:bold;">Chuyên mục: ${article.category || ''}</span>
             </div>
             <p class="article-sapo-main">${sapoText}</p>
-            ${article.thumbnail ? `<img src="${article.thumbnail}" class="detail-main-img" alt="thumb">` : ''}
+            ${(article.thumbnail || article.image) ? `<img src="${article.thumbnail || article.image}" class="detail-main-img" alt="thumb">` : ''}
             <div class="article-content-body">${article.content || ''}</div>
             <br><hr><br>
             <button onclick="renderCategory('home')" class="btn-submit" style="background:#6c757d;">&larr; Quay lại trang chủ</button>
@@ -339,19 +339,27 @@ function handleCrawlFromHtml() {
     }
 
     try {
-        const article = parseDantriHtml(htmlText, urlInput);
+        let article = null;
+        if (typeof parseDantriDom === 'function') {
+            article = parseDantriDom(htmlText, urlInput);
+        } else if (typeof parseDantriHtml === 'function') {
+            article = parseDantriHtml(htmlText, urlInput);
+        }
 
         if (article) {
             savePostToStorage(article);
 
-            alertCatName.innerText = article.category;
+            alertCatName.innerText = article.category || 'Thời sự';
             alertBox.style.display = "block";
             jsonPreview.innerText = JSON.stringify(article, null, 2);
             jsonPreview.style.display = "block";
 
             renderLocalStorageList();
+        } else {
+            alert("Chưa tìm thấy hàm phân tích HTML trong crawler.js!");
         }
     } catch (e) {
+        console.error("Lỗi phân tích HTML:", e);
         alert("Mã nguồn HTML không hợp lệ!");
     }
 }
