@@ -63,7 +63,7 @@ function renderNavbar() {
     if (footerCatEl) footerCatEl.innerHTML = footerHtml;
 }
 
-// === 3. TẠO KHUNG BÀI VIẾT 1 LỚN + 2 NHỎ ===
+// === 3. KHUNG BÀI VIẾT TẠO BẰNG ONCLICK (MỞ TRỰC TIẾP TRÊN WEB) ===
 function createGridHtml(postsList) {
     if (!postsList || postsList.length === 0) return '';
 
@@ -72,6 +72,7 @@ function createGridHtml(postsList) {
 
     let html = `<div class="featured-grid">`;
 
+    // Bài viết lớn bên trái
     if (featuredLarge) {
         const defaultImg = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop";
         const rawExcerpt = featuredLarge.excerpt || '';
@@ -87,6 +88,7 @@ function createGridHtml(postsList) {
         `;
     }
 
+    // 2 bài viết nhỏ bên phải
     html += `<div class="featured-small-group">`;
     featuredSmall.forEach(post => {
         const defaultImgSmall = "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=600&auto=format&fit=crop";
@@ -103,7 +105,7 @@ function createGridHtml(postsList) {
     return html;
 }
 
-// === 4. HIỂN THỊ TRANG CHỦ & CHUYÊN MỤC ===
+// === 4. TRANG CHỦ VÀ DANH SÁCH BÀI VIẾT ===
 function renderCategory(catId = 'home') {
     const app = document.getElementById('appView');
     if (!app) return;
@@ -199,7 +201,7 @@ function renderCategory(catId = 'home') {
     app.innerHTML = html;
 }
 
-// === 5. TRANG CHI TIẾT BÀI VIẾT ===
+// === 5. TRANG CHI TIẾT BÀI VIẾT (MỞ TRỰC TIẾP TRÊN WEB) ===
 function renderArticleDetail(postId) {
     const app = document.getElementById('appView');
     if (!app) return;
@@ -215,20 +217,20 @@ function renderArticleDetail(postId) {
     const rawExcerpt = article.excerpt || '';
     const sapoText = rawExcerpt.startsWith('(Dân trí)') ? rawExcerpt : (rawExcerpt ? `(Dân trí) - ${rawExcerpt}` : '');
 
+    // Render trực tiếp giao diện bài viết vào main
     app.innerHTML = `
         <div class="article-detail">
             <h1 class="article-title-main">${article.title}</h1>
             <div class="article-meta-info">
-                <span><b>${article.author || 'Dân trí'}</b></span> · 
-                <span>${article.publishedAt || ''}</span> · 
-                <span style="color:#008837; font-weight:bold;">${article.category || ''}</span> · 
-                <span>Nguồn: ${article.source || 'dantri.com.vn'}</span>
+                <span>Tác giả: <b>${article.author || 'Dân trí'}</b></span> · 
+                <span>Đăng ngày: ${article.publishedAt || ''}</span> · 
+                <span style="color:#008837; font-weight:bold;">Chuyên mục: ${article.category || ''}</span>
             </div>
             <p class="article-sapo-main">${sapoText}</p>
             ${article.thumbnail ? `<img src="${article.thumbnail}" class="detail-main-img" alt="thumb">` : ''}
             <div class="article-content-body">${article.content || ''}</div>
             <br><hr><br>
-            <a href="${article.url}" target="_blank" style="color: #008837; font-weight: bold;">[Xem bài viết gốc trên Dantri]</a>
+            <button onclick="renderCategory('home')" class="btn-submit" style="background:#6c757d;">&larr; Quay lại trang chủ</button>
         </div>
     `;
     window.scrollTo({ top: 0, behavior: 'smooth' });
