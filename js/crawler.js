@@ -1,7 +1,5 @@
 /**
- * PHẦN 3: CROWLER TIN TỨC DÂN TRÍ
- * Hàm getArticle(url) bóc tách dữ liệu bài viết từ Dantri.com.vn
- * Có cơ chế tự động Fallback bóc tách từ URL nếu Proxy bị chặn.
+ * PHẦN 3: CROWLER TIN TỨC DÂN TRÍ (TỐI ƯU ẢNH DYNAMIC & CHỐNG TRÙNG LẶP)
  */
 
 const CATEGORY_MAP = {
@@ -21,6 +19,50 @@ const CATEGORY_MAP = {
     'giao-duc': 'Giáo dục',
     'xe': 'Xe ++'
 };
+
+// Kho ảnh minh họa đa dạng theo từng chuyên mục (tránh bị trùng 1 ảnh thỏi vàng)
+function getSmartThumbnail(category, id, crawledImg) {
+    if (crawledImg && crawledImg.startsWith('http') && !crawledImg.includes('photo-1610375461246')) {
+        return crawledImg;
+    }
+
+    const categoryImages = {
+        'Thể thao': [
+            'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop'
+        ],
+        'Thế giới': [
+            'https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=800&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&auto=format&fit=crop'
+        ],
+        'Kinh doanh': [
+            'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&auto=format&fit=crop'
+        ],
+        'Thời sự': [
+            'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800&auto=format&fit=crop'
+        ],
+        'Sức khỏe': [
+            'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=800&auto=format&fit=crop'
+        ]
+    };
+
+    const defaultList = categoryImages[category] || [
+        'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop'
+    ];
+
+    // Dùng mã băm từ ID để phân bổ ảnh ngẫu nhiên nhưng cố định cho từng bài
+    let hash = 0;
+    const str = (id || '') + (category || '');
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % defaultList.length;
+    return defaultList[index];
+}
 
 async function fetchArticleHtml(url) {
     const proxies = [
@@ -42,7 +84,7 @@ async function fetchArticleHtml(url) {
             const html = await getHtml();
             if (html && html.length > 500) return html;
         } catch (e) {
-            console.warn("Proxy gặp sự cố, thử phương án tiếp theo...");
+            console.warn("Thử proxy tiếp theo...");
         }
     }
     return null;
@@ -81,6 +123,7 @@ async function getArticle(url) {
         const category = CATEGORY_MAP[rawCategorySlug] || 'Thời sự';
 
         const htmlText = await fetchArticleHtml(url);
+        let title = "", excerpt = "", contentText = "", author = "Dân trí", rawThumbnail = "";
 
         if (htmlText) {
             const doc = new DOMParser().parseFromString(htmlText, 'text/html');
@@ -90,14 +133,14 @@ async function getArticle(url) {
                 return elements[index]?.textContent?.trim() || '';
             };
 
-            const title = getText('#articleContent [data-slot="title"]') || 
-                          getText('h1.title-page') || 
-                          getText('h1') || 
-                          doc.querySelector('title')?.textContent?.replace('- Báo Dân trí', '')?.trim();
+            title = getText('#articleContent [data-slot="title"]') || 
+                    getText('h1.title-page') || 
+                    getText('h1') || 
+                    doc.querySelector('title')?.textContent?.replace('- Báo Dân trí', '')?.trim();
 
-            const excerpt = getText('#articleContent [data-slot="sapo"]') || 
-                            getText('h2.singular-sapo') || 
-                            getText('.sapo');
+            excerpt = getText('#articleContent [data-slot="sapo"]') || 
+                      getText('h2.singular-sapo') || 
+                      getText('.sapo');
 
             let contentEl = doc.querySelector('#articleContent [data-slot="content"]') || 
                             doc.querySelector('.singular-content') || 
@@ -107,52 +150,40 @@ async function getArticle(url) {
                 contentEl = contentEl.cloneNode(true);
                 contentEl.querySelectorAll('.relate-container, .video-content-wrapper, iframe, script, style').forEach(el => el.remove());
             }
-            const contentText = contentEl ? contentEl.textContent.trim() : "";
+            contentText = contentEl ? contentEl.textContent.trim() : "";
 
-            let author = getText('#articleContent [rel="author"]', 1) || 
-                         getText('#articleContent [rel="author"]', 0) || 
-                         getText('.author-name') || 
-                         'Dân trí';
+            author = getText('#articleContent [rel="author"]', 1) || 
+                     getText('#articleContent [rel="author"]', 0) || 
+                     getText('.author-name') || 
+                     'Dân trí';
 
-            let thumbnail = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
-                            doc.querySelector('#articleContent img, .singular-content img')?.getAttribute('src') ||
-                            'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop';
-
-            if (title && title.length > 5) {
-                return {
-                    "id": id,
-                    "title": title,
-                    "slug": slug,
-                    "excerpt": excerpt || title,
-                    "content": contentText || excerpt || title,
-                    "author": author,
-                    "category": category,
-                    "publishedAt": publishedAt,
-                    "source": "dantri.com.vn",
-                    "url": url,
-                    "thumbnail": thumbnail
-                };
-            }
+            rawThumbnail = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+                           doc.querySelector('#articleContent img, .singular-content img')?.getAttribute('src') || "";
         }
 
-        // CƠ CHẾ BẢO HIỂM NỘP BÀI (Chạy khi Proxy bị chặn)
-        const titleFromSlug = slug
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+        // Tự động khôi phục Tiêu đề từ Slug nếu proxy bị chặn
+        if (!title || title.length < 5) {
+            title = slug
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        // Chọn ảnh thông minh theo chuyên mục bài viết
+        const thumbnail = getSmartThumbnail(category, id, rawThumbnail);
 
         return {
             "id": id,
-            "title": titleFromSlug,
+            "title": title,
             "slug": slug,
-            "excerpt": `(Dân trí) - Thông tin chi tiết cập nhật về bài viết thuộc chuyên mục ${category} trên Báo Dân trí.`,
-            "content": `Nội dung chi tiết bài viết "${titleFromSlug}" đang được cập nhật từ hệ thống Dân trí. Người đọc có thể nhấn vào liên kết bài viết gốc bên dưới để xem đầy đủ thông tin báo chí.`,
-            "author": "Văn Hưng",
+            "excerpt": excerpt || `(Dân trí) - Thông tin chi tiết cập nhật về bài viết thuộc chuyên mục ${category} trên Báo Dân trí.`,
+            "content": contentText || `Nội dung chi tiết bài viết "${title}" đang được cập nhật từ hệ thống Dân trí.`,
+            "author": author,
             "category": category,
             "publishedAt": publishedAt,
             "source": "dantri.com.vn",
             "url": url,
-            "thumbnail": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop"
+            "thumbnail": thumbnail
         };
 
     } catch (error) {
