@@ -63,7 +63,7 @@ function renderNavbar() {
     if (footerCatEl) footerCatEl.innerHTML = footerHtml;
 }
 
-// === 3. KHUNG BÀI VIẾT TẠO BẰNG ONCLICK (MỞ TRỰC TIẾP TRÊN WEB) ===
+// === 3. KHUNG BÀI VIẾT TRANG CHỦ ===
 function createGridHtml(postsList) {
     if (!postsList || postsList.length === 0) return '';
 
@@ -72,7 +72,6 @@ function createGridHtml(postsList) {
 
     let html = `<div class="featured-grid">`;
 
-    // Bài viết lớn bên trái
     if (featuredLarge) {
         const defaultImg = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop";
         const rawExcerpt = featuredLarge.excerpt || '';
@@ -88,7 +87,6 @@ function createGridHtml(postsList) {
         `;
     }
 
-    // 2 bài viết nhỏ bên phải
     html += `<div class="featured-small-group">`;
     featuredSmall.forEach(post => {
         const defaultImgSmall = "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=600&auto=format&fit=crop";
@@ -105,14 +103,12 @@ function createGridHtml(postsList) {
     return html;
 }
 
-// === 4. TRANG CHỦ VÀ DANH SÁCH BÀI VIẾT ===
+// === 4. TRANG CHỦ & BÀI VIẾT TEO CHUYÊN MỤC ===
 function renderCategory(catId = 'home') {
     const app = document.getElementById('appView');
     if (!app) return;
 
     const posts = getPosts();
-    const categories = getCategories();
-
     document.querySelectorAll('.nav-menu a').forEach(el => el.classList.remove('active'));
     const activeNav = document.getElementById(`nav-${catId}`);
     if (activeNav) activeNav.classList.add('active');
@@ -147,7 +143,7 @@ function renderCategory(catId = 'home') {
             html += `</div>`;
         }
 
-        const sectionCategories = ['Thế giới', 'Thời sự', 'Pháp luật', 'Sức khỏe', 'Đời sống', 'Du lịch', 'Kinh doanh'];
+        const sectionCategories = ['Thế giới', 'Thời sự', 'Pháp luật', 'Sức khỏe', 'Đời sống', 'Du lịch', 'Kinh doanh', 'Bất động sản'];
         sectionCategories.forEach(catName => {
             const catPosts = posts.filter(p => p.category && p.category.toLowerCase().includes(catName.toLowerCase()));
             if (catPosts.length > 0) {
@@ -201,7 +197,7 @@ function renderCategory(catId = 'home') {
     app.innerHTML = html;
 }
 
-// === 5. TRANG CHI TIẾT BÀI VIẾT (MỞ TRỰC TIẾP TRÊN WEB) ===
+// === 5. TRANG CHI TIẾT BÀI VIẾT ===
 function renderArticleDetail(postId) {
     const app = document.getElementById('appView');
     if (!app) return;
@@ -217,7 +213,6 @@ function renderArticleDetail(postId) {
     const rawExcerpt = article.excerpt || '';
     const sapoText = rawExcerpt.startsWith('(Dân trí)') ? rawExcerpt : (rawExcerpt ? `(Dân trí) - ${rawExcerpt}` : '');
 
-    // Render trực tiếp giao diện bài viết vào main
     app.innerHTML = `
         <div class="article-detail">
             <h1 class="article-title-main">${article.title}</h1>
@@ -236,7 +231,7 @@ function renderArticleDetail(postId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// === 6. TRANG CRAWLER PAGE ===
+// === 6. TRANG CRAWLER TIN TỨC CHUẨN ĐÚNG 100% THEO MẪU ===
 function renderCrawlerPage() {
     const app = document.getElementById('appView');
     if (!app) return;
@@ -245,58 +240,129 @@ function renderCrawlerPage() {
 
     app.innerHTML = `
         <div class="crawler-box">
-            <h2 class="section-title">Chức năng Crawler Tin Tức</h2>
-            <p style="margin-bottom: 15px;">Nhập URL bài viết từ website Dantri.com.vn để tự động bóc tách dữ liệu:</p>
+            <h2 class="section-title">Crawler tin tức</h2>
+            <p class="crawler-desc">Nhập URL một bài viết trên dantri.com.vn, hệ thống sẽ lấy nội dung, chuẩn hóa thành JSON và lưu vào LocalStorage.</p>
             
-            <div class="form-group">
-                <label for="crawlUrl">Đường dẫn bài viết (URL):</label>
-                <input type="text" id="crawlUrl" placeholder="https://dantri.com.vn/thoi-su/tong-bi-thu-chu-tich-nuoc-phap-luat-phai-du-on-dinh-de-nguoi-dan-yen-tam-20260928141449559.htm">
+            <div class="crawl-input-group">
+                <input type="text" id="crawlUrl" placeholder="https://dantri.com.vn/bat-dong-san/ha-noi-tinh-co-che-boi-thuong-dat-dac-biet-cho-7-du-an-duong-sat-20260928122246655.htm">
+                <button class="btn-crawl" onclick="handleCrawl()">Crawl</button>
             </div>
-            <button class="btn-submit" onclick="handleCrawl()">Bắt đầu Cào Dữ Liệu</button>
 
-            <div id="crawlerStatus" style="margin-top: 15px; font-weight: bold;"></div>
-            <div id="jsonPreviewContainer" style="display:none;">
-                <h3 style="margin-top: 20px;">Kết quả JSON Trích xuất:</h3>
-                <pre class="json-preview" id="jsonPreview"></pre>
-                <button class="btn-submit" style="background: #28a745; margin-top: 15px;" onclick="saveCrawledArticle()">Lưu Bài Viết Vào LocalStorage</button>
+            <details class="fallback-accordion">
+                <summary>► Cách dự phòng: nếu bấm Crawl bị lỗi, dán mã nguồn HTML của bài viết vào đây</summary>
+                <div class="fallback-content">
+                    <textarea id="rawHtmlInput" rows="6" placeholder="Dán toàn bộ mã nguồn HTML của bài viết Dân trí vào đây..."></textarea>
+                    <button class="btn-crawl" style="margin-top: 10px;" onclick="handleCrawlFromHtml()">Phân tích HTML & Lưu</button>
+                </div>
+            </details>
+
+            <div id="crawlSuccessAlert" class="alert-success" style="display:none;">
+                Đã cập nhật bài viết vào LocalStorage. Xem tại trang chủ / chuyên mục <span id="alertCatName" style="font-weight:bold;"></span>.
+            </div>
+
+            <pre class="json-preview" id="jsonPreview" style="display:none;"></pre>
+
+            <div class="local-storage-section">
+                <h3 class="local-storage-title">Bài mới nhất trong LocalStorage</h3>
+                <div id="localStorageList" class="local-storage-list"></div>
+                <button class="btn-reset-data" onclick="resetDefaultData()">Reset dữ liệu mẫu</button>
             </div>
         </div>
     `;
+
+    renderLocalStorageList();
 }
 
-let tempCrawledPost = null;
+function renderLocalStorageList() {
+    const container = document.getElementById('localStorageList');
+    if (!container) return;
+
+    const posts = getPosts();
+    if (posts.length === 0) {
+        container.innerHTML = '<p style="padding: 10px 0; color: #777;">Chưa có bài viết nào trong LocalStorage.</p>';
+        return;
+    }
+
+    let html = '';
+    posts.forEach(post => {
+        html += `
+            <div class="ls-item" onclick="renderArticleDetail('${post.id}')">
+                <span class="ls-title">${post.title}</span>
+                <span class="ls-category">${post.category || 'Thời sự'}</span>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
 
 async function handleCrawl() {
     const urlInput = document.getElementById('crawlUrl').value.trim();
-    const statusEl = document.getElementById('crawlerStatus');
-    const previewContainer = document.getElementById('jsonPreviewContainer');
+    const alertBox = document.getElementById('crawlSuccessAlert');
+    const alertCatName = document.getElementById('alertCatName');
     const jsonPreview = document.getElementById('jsonPreview');
 
-    if (!urlInput) { alert("Vui lòng nhập đường dẫn URL!"); return; }
+    if (!urlInput) {
+        alert("Vui lòng nhập đường dẫn URL bài viết!");
+        return;
+    }
 
-    statusEl.style.color = "orange";
-    statusEl.innerText = "Đang cào dữ liệu từ Dantri...";
-    previewContainer.style.display = "none";
+    alertBox.style.display = "none";
+    jsonPreview.style.display = "none";
 
     const result = await getArticle(urlInput);
 
     if (result) {
-        tempCrawledPost = result;
-        statusEl.style.color = "green";
-        statusEl.innerText = "Cào dữ liệu thành công!";
+        savePostToStorage(result);
+
+        alertCatName.innerText = result.category || 'Thời sự';
+        alertBox.style.display = "block";
+
         jsonPreview.innerText = JSON.stringify(result, null, 2);
-        previewContainer.style.display = "block";
+        jsonPreview.style.display = "block";
+
+        renderLocalStorageList();
     } else {
-        statusEl.style.color = "red";
-        statusEl.innerText = "Không thể cào bài viết. Vui lòng kiểm tra lại URL!";
+        alert("Không thể cào tự động. Vui lòng thử dùng 'Cách dự phòng' bằng cách dán HTML!");
     }
 }
 
-function saveCrawledArticle() {
-    if (tempCrawledPost) {
-        savePostToStorage(tempCrawledPost);
-        alert("Đã lưu bài viết thành công vào LocalStorage!");
-        renderCategory('home');
+function handleCrawlFromHtml() {
+    const htmlText = document.getElementById('rawHtmlInput').value.trim();
+    const urlInput = document.getElementById('crawlUrl').value.trim() || 'https://dantri.com.vn/';
+    const alertBox = document.getElementById('crawlSuccessAlert');
+    const alertCatName = document.getElementById('alertCatName');
+    const jsonPreview = document.getElementById('jsonPreview');
+
+    if (!htmlText) {
+        alert("Vui lòng dán mã nguồn HTML bài viết vào đây!");
+        return;
+    }
+
+    try {
+        const article = parseDantriHtml(htmlText, urlInput);
+
+        if (article) {
+            savePostToStorage(article);
+
+            alertCatName.innerText = article.category;
+            alertBox.style.display = "block";
+            jsonPreview.innerText = JSON.stringify(article, null, 2);
+            jsonPreview.style.display = "block";
+
+            renderLocalStorageList();
+        }
+    } catch (e) {
+        alert("Mã nguồn HTML không hợp lệ!");
+    }
+}
+
+async function resetDefaultData() {
+    if (confirm("Bạn có chắc chắn muốn reset lại dữ liệu mẫu ban đầu?")) {
+        localStorage.removeItem('posts');
+        localStorage.removeItem('categories');
+        await loadInitialData();
+        renderNavbar();
+        renderCrawlerPage();
     }
 }
 
