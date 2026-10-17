@@ -3,21 +3,21 @@
  */
 
 const CATEGORY_MAP = {
-    'thoi-su': { title: 'Thời sự', id: 'thoi-su' },
-    'the-gioi': { title: 'Thế giới', id: 'the-gioi' },
-    'kinh-doanh': { title: 'Kinh doanh', id: 'kinh-doanh' },
-    'bat-dong-san': { title: 'Bất động sản', id: 'bat-dong-san' },
-    'the-thao': { title: 'Thể thao', id: 'the-thao' },
-    'lao-dong-viec-lam': { title: 'Lao động', id: 'lao-dong-viec-lam' },
-    'suc-khoe': { title: 'Sức khỏe', id: 'suc-khoe' },
-    'van-hoa': { title: 'Văn hóa', id: 'van-hoa' },
-    'giai-tri': { title: 'Giải trí', id: 'giai-tri' },
-    'du-lich': { title: 'Du lịch', id: 'du-lich' },
-    'phap-luat': { title: 'Pháp luật', id: 'phap-luat' },
-    'doi-song': { title: 'Đời sống', id: 'doi-song' },
-    'cong-nghe': { title: 'Công nghệ', id: 'cong-nghe' },
-    'giao-duc': { title: 'Giáo dục', id: 'giao-duc' },
-    'xe': { title: 'Xe ++', id: 'xe' }
+    'Thời sự': { title: 'Thời sự', id: 'Thời sự' },
+    'Thế giới': { title: 'Thế giới', id: 'Thế giới' },
+    'Kinh doanh': { title: 'Kinh doanh', id: 'Kinh doanh' },
+    'Bất động sản': { title: 'Bất động sản', id: 'Bất động sản' },
+    'Thể thao': { title: 'Thể thao', id: 'Thể thao' },
+    'Lao động': { title: 'Lao động', id: 'Lao động' },
+    'Sức khỏe': { title: 'Sức khỏe', id: 'Sức khỏe' },
+    'Văn hóa': { title: 'Văn hóa', id: 'Văn hóa' },
+    'Giải trí': { title: 'Giải trí', id: 'Giải trí' },
+    'Du lịch': { title: 'Du lịch', id: 'Du lịch' },
+    'Pháp luật': { title: 'Pháp luật', id: 'Pháp luật' },
+    'Đời sống': { title: 'Đời sống', id: 'Đời sống' },
+    'Công nghệ': { title: 'Công nghệ', id: 'Công nghệ' },
+    'Giáo dục': { title: 'Giáo dục', id: 'Giáo dục' },
+    'Xe': { title: 'Xe ++', id: 'xe' }
 };
 
 // Hàm Fetch HTML bài viết qua Đa Proxy
